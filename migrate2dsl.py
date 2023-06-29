@@ -63,9 +63,9 @@ def parse_dotnet_projects(solution_path, container: Container):
     all_projects = {}
 
     for project_path in project_file_names:
-        project_name, output_type_element, target_version = parse_dotnet_project_file(project_path)
+        project_name, output_type_element = parse_dotnet_project_file(project_path)
         if "Test" not in project_path and "Test" not in project_name:
-            component = container.add_component(name=project_name, description="Project component", technology=f"C# {target_version} {output_type_element}")
+            component = container.add_component(name=project_name, description="Project component", technology=f"C# {output_type_element}")
             all_projects[project_name] = ComponentData(name=project_name, dotnet_project_path=project_path, component=component, dependencies=[])
 
     return all_projects
@@ -77,9 +77,9 @@ def parse_cplusplus_projects(solution_path, container: Container):
     all_projects = {}
 
     for project_path in project_file_names:
-        project_name, output_type_element, target_version = parse_cplusplus_project_file(project_path)
+        project_name, output_type_element = parse_cplusplus_project_file(project_path)
         if "Test" not in project_path and "Test" not in project_name:
-            component = container.add_component(name=project_name, description="Project component", technology=f"C++ {target_version} {output_type_element}")
+            component = container.add_component(name=project_name, description="Project component", technology=f"C++ {output_type_element}")
             all_projects[project_name] = ComponentData(name=project_name, dotnet_project_path=project_path, component=component, dependencies=[])
 
     return all_projects
@@ -103,8 +103,7 @@ def get_project_file_names(solution_path, project_extension = ".csproj"):
 def parse_cplusplus_project_file(project_path):
     project_name = project_name = os.path.splitext(os.path.basename(project_path))[0]
     output_type = ''
-    target_version = ''
-    return project_name, output_type, target_version
+    return project_name, output_type
 
 def parse_dotnet_project_file(project_path):
     # Parse the .csproj file
@@ -127,13 +126,7 @@ def parse_dotnet_project_file(project_path):
     else:
         output_type = ''
 
-    target_version = property_group.find(xml_schema + "TargetFrameworkVersion")
-    if target_version is not None and target_version.text:
-        target_version = target_version.text
-    else:
-        target_version = ''
-    
-    return project_name, output_type, target_version
+    return project_name, output_type
 
 def get_project_dependencies_via_xml(project_path):
     # Parse the .csproj file
