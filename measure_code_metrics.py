@@ -3,7 +3,7 @@ import subprocess
 import csv
 import xml.etree.ElementTree as ET
 
-def measure_dotnet_system(root_path, csv_file):
+def measure_dotnet_solutions(root_path, csv_file):
     # find all solutions with projects
     solutions = get_solution_paths(root_path)
 
@@ -21,13 +21,28 @@ def measure_dotnet_system(root_path, csv_file):
             solution_dir, solution_name = get_solution_info(solution_file)
             write_code_metrics(solution_name, solution_dir + "/tmp_report.xml", writer)
 
+    print(f"CSV file generated: {csv_file}")
+
+def measure_dotnet_projects(root_path, csv_file):
+    # find all projects
+    projects = get_solution_paths(root_path)
+
+    for solution_file in sorted(solutions):
+        solution_dir, _ = get_solution_info(solution_file)
+        arguments = ["/solution:" + solution_file, "/out:"+ solution_dir + "/tmp_report.xml"]
+        subprocess.run(["C:/tools/Metrics/Metrics.exe"] + arguments, check=True)
+
+    with open(csv_file, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Solution", "Assembly Name", "MaintainabilityIndex", "CyclomaticComplexity", "ClassCoupling",
+                         "DepthOfInheritance", "SourceLines", "ExecutableLines", "Methods"])
+
+        for solution_file in sorted(solutions):
+            solution_dir, solution_name = get_solution_info(solution_file)
+            write_code_metrics(solution_name, solution_dir + "/tmp_report.xml", writer)
 
     print(f"CSV file generated: {csv_file}")
 
-def get_solution_info(solution_file):
-    return (solution_file.rsplit('/', 1)[0], solution_file.rsplit('/', 2)[1])
-
-        
 def get_solution_paths(root_path):
     solutions = []
     print(root_path)
@@ -38,6 +53,10 @@ def get_solution_paths(root_path):
     return solutions
 
 
+def get_solution_info(solution_file):
+    return (solution_file.rsplit('/', 1)[0], solution_file.rsplit('/', 2)[1])
+
+        
 def write_code_metrics(solution_name, xml_file, writer):
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -66,4 +85,4 @@ root_path = "C:/Users/rolandgerm/projects/icagile-prg-archive/icagile-prg-admira
 
 root_path = "C:/Users/rolandgerm/projects/B_and_R/Subsystems"
 csv_file = "csv_file.csv"
-workspace = measure_dotnet_system(root_path, csv_file)
+workspace = measure_dotnet_solutions(root_path, csv_file)

@@ -11,7 +11,7 @@ class ComponentData:
     component: Component
     dependencies: set
 
-def parse_dotnet_system(root_path, reference_keyword = "<Reference"):
+def parse_dotnet_system(solution_paths, reference_keyword = "<Reference"):
     # Create a Structurizr workspace
     workspace = Workspace(name="Automation Software", description="Software architecture for the automation software")
 
@@ -27,10 +27,10 @@ def parse_dotnet_system(root_path, reference_keyword = "<Reference"):
 
     # Level 2: Solutions with Projects as containers with components
     all_project_components = {}
-    solutions = get_solution_paths(root_path)
-    for solution_path in sorted(solutions):
+    for solution_path in sorted(solution_paths):
         solution_name = os.path.splitext(os.path.basename(solution_path))[0]
         solution_container = automation_system.add_container(solution_name, "Solution container", ".NET")
+
         all_project_components |= parse_dotnet_projects(solution_path, solution_container)
         all_project_components |= parse_cplusplus_projects(solution_path, solution_container)
 
@@ -46,14 +46,19 @@ def parse_dotnet_system(root_path, reference_keyword = "<Reference"):
     return workspace
 
 
-def get_solution_paths(root_path):
-    solutions = []
-    print(root_path)
-    for root, dirs, files in os.walk(root_path):
+def get_solution_paths(root_path, recursive=True, exclude = None):
+    if recursive:
+        file_iter = os.walk(root_path)
+    else:
+        file_iter =[next(os.walk(root_path))]
+
+    solution_paths = []
+    for root, dirs, files in file_iter:
         for file in files:
-            if file.endswith(".sln"):
-                solutions.append(os.path.join(root, file))
-    return solutions
+            if file.endswith(".sln") and (exclude and exclude not in file):
+                solution_paths.append(os.path.join(root, file))
+
+    return solution_paths
 
 
 def parse_dotnet_projects(solution_path, container: Container):
@@ -102,7 +107,11 @@ def get_project_file_names(solution_path, project_extension = ".csproj"):
 
 def parse_cplusplus_project_file(project_path):
     project_name = project_name = os.path.splitext(os.path.basename(project_path))[0]
-    output_type = ''
+
+    with open(project_path, 'r') as f:
+        outputs = list(filter(lambda line: "<ConfigurationType>" in line, f))
+
+    output_type = 'DLL' if 'DynamicLibrary' in outputs[0] else 'EXE'
     return project_name, output_type
 
 def parse_dotnet_project_file(project_path):
@@ -150,7 +159,7 @@ def get_project_dependencies(project_path, reference_keyword):
     dependencies = []
     with open(project_path, "r") as f:
         for line in f:
-            if line.strip().startswith(reference_keyword):
+            if line.strip().startswith(f"{reference_keyword} Include"):
                 if reference_keyword == "<Reference":
                     dependency_path = line.split('"')[1].split(',')[0]
                 else:
@@ -159,7 +168,7 @@ def get_project_dependencies(project_path, reference_keyword):
                 dependencies.append(dependency_path)
     return set(dependencies)
 
-def print_dsl(workspace: Workspace):
+def write_dsl(workspace: Workspace):
     # Write the corresponding DSL code to the output file
     with open("./structurizr.dsl", "w") as f:
         f.write(format_indent(0, f'workspace "{workspace.name}" "{workspace.description}" {{\n'))
@@ -250,15 +259,25 @@ def format_indent(i, line):
 
 # Example usage
 
+'''
+    solution_paths = get_solution_paths"C:/Users/rolandgerm/projects/admiral/asw.betting.svc.engine"
+    solution_paths = get_solution_paths"C:/Users/rolandgerm/projects/admiral/admiral.programengine"
 
-root_path = "C:/Users/rolandgerm/projects/admiral/asw.betting.svc.engine"
-root_path = "C:/Users/rolandgerm/projects/admiral/admiral.programengine"
-root_path = "C:/Users/rolandgerm/projects/icagile-prg-archive/icagile-prg-admiral-2022/SupermarketReceipt-Refactoring-Kata/csharp"
-#workspace = parse_dotnet_system(root_path, "<ProjectReference")
+    solution_paths = get_solution_paths"C:/Users/rolandgerm/projects/icagile-prg-archive/icagile-prg-admiral-2022/SupermarketReceipt-Refactoring-Kata/csharp"
+    you can run it with different dependencies
+    solution_paths = parse_dotnet_system(root_path, "<ProjectReference")
 
-root_path = "C:/Users/rolandgerm/projects/BuR"
-workspace = parse_dotnet_system(root_path, "<Reference")
+    solution_paths = get_solution_paths("C:/Users/rolandgerm/projects/BuR")
+'''
 
-print_dsl(workspace)
+base_dir = "C:/Users/rolandgerm/source/Workspaces/ASW/AutomationStudio/Trunk/"
+solution_paths = get_solution_paths(base_dir + "Subsystems")
+solution_paths += get_solution_paths(base_dir, False)
+
+solution_paths = get_solution_paths(base_dir + "Subsystems", True, "Interfaces.sln")
+solution_paths =  [base_dir + "Subsystems/Interfaces.sln"]
+workspace = parse_dotnet_system(solution_paths, "<Reference")
+
+write_dsl(workspace)
 
 #print(workspace.dumps(indent=3))
