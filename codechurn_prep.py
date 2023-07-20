@@ -38,8 +38,8 @@ def folder(row):
     return val
 
 def target_env(row):
-    cfileExtensions = ('.cpp', '.h', '.c')
-    if row['file'].endswith(cfileExtensions):
+    cfile_extensions = ('.cpp', '.h', '.c')
+    if row['file'].endswith(cfile_extensions):
         return 'C++'
     return 'C#'
 
@@ -72,30 +72,20 @@ new['Target'] = new.apply(target_env, axis=1)
 
 # remove bad data and cleanup temporary columns
 new = new.drop(new[new['Group'] == 'exp'].index)
-new = new.drop(0, axis=1)
-new = new.drop(1, axis=1)
-new = new.drop(2, axis=1)
-new = new.drop(3, axis=1)
-new = new.drop(4, axis=1)
-new = new.drop(5, axis=1)
-new = new.drop(6, axis=1)
-new = new.drop(7, axis=1)
-new = new.drop(8, axis=1)
-new = new.drop(9, axis=1)
-new = new.drop(10, axis=1)
+new = new.drop([0, 1 ,2, 3, 4, 5, 6, 7, 8, 9, 10], axis=1)
 
 # create new dataframe with sum of churns
 g = new.groupby(['File Name'])['count'].sum().reset_index()
 g = g.rename(columns={"count": "churn"})
 g = g.set_index('File Name').join(new.set_index('File Name')).reset_index()
-g = g.drop('year', axis=1).drop('count', axis=1).drop_duplicates(subset='File Name')
+g = g.drop(['year', 'count'], axis=1).drop_duplicates(subset='File Name')
 
 # add pivots
 table = pd.pivot_table(g, values='churn', index=['Project', 'Group', 'Folder'], aggfunc=np.sum).reset_index()
 table2 = pd.pivot_table(new, values='count', index=['year', 'Project', 'Group'], aggfunc=np.sum).reset_index()
 
 with pd.ExcelWriter('Code Churn Metrics.xlsx') as writer:  
-    new.to_excel(writer, sheet_name='Churn per year')
+    new.to_excel(writer, sheet_name='Churn history')
     g.to_excel(writer, sheet_name='Churn sum')
     table.to_excel(writer, sheet_name='All changes per folder')
     table2.to_excel(writer, sheet_name='Yearly changes per group')
