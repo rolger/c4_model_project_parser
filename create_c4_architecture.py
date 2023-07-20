@@ -4,6 +4,16 @@ from structurizr import Workspace
 from structurizr.model import Container, Location, Component
 from dataclasses import dataclass
 
+'''
+    Create a C4 model from MS Visual Studio solution and project files.
+    - Search for all soution paths inside a given directory: 
+        get_solution_paths(directory)
+    - Create a C4 workspace object with a given array of solution paths: 
+        parse_dotnet_system(solution_paths)
+    - Save the workspace to a DSL file which can be viewed with https://structurizr.com/dsl: 
+        write_dsl(workspace)
+'''
+
 @dataclass
 class ComponentData:
     name: str
