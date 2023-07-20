@@ -71,6 +71,8 @@ def parse_dotnet_projects(solution_path, container: Container):
         project_name, output_type_element = parse_dotnet_project_file(project_path)
         if "Test" not in project_path and "Test" not in project_name:
             component = container.add_component(name=project_name, description="Project component", technology=f"C# {output_type_element}")
+            if "Interface" in project_name:
+                component.tags.add("Interface")
             all_projects[project_name] = ComponentData(name=project_name, dotnet_project_path=project_path, component=component, dependencies=[])
 
     return all_projects
@@ -181,8 +183,12 @@ def write_dsl(workspace: Workspace):
                 f.write(format_indent(12, f'c{container.id} = container "{container.name}" "{container.description}" "{container.technology}" {{\n'))
 
                 for component in container.components:
-                    f.write(format_indent(16, f'c{component.id} = component "{component.name}" "{component.description}" "{component.technology}"\n'))
-
+                    f.write(format_indent(16, f'c{component.id} = component "{component.name}" "{component.description}" "{component.technology}"'))
+                    if "Interface" in component.tags:
+                        f.write(format_indent(16, '{\n'))
+                        f.write(format_indent(19,'tags "Interface" \n'))
+                        f.write(format_indent(16,'}'))
+                    f.write(format_indent(16, '\n'))
                 f.write(format_indent(12, '}\n'))
                             
         f.write(format_indent(8, '}\n'))
@@ -214,6 +220,12 @@ def create_views(workspace:Workspace):
                 background #3CBD11
                 color #ffffff
                 shape RoundedBox
+            }}
+
+            element "Interface" {{
+                background #1D520B
+                color #ffffff
+                shape Circle
             }}
         }}
 
