@@ -1,0 +1,8 @@
+*.csv
+*.xlsx
+*.dsl
+
+.vscode
+
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/**
