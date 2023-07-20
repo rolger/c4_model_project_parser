@@ -55,7 +55,7 @@ def get_solution_paths(root_path, recursive=True, exclude = None):
     solution_paths = []
     for root, dirs, files in file_iter:
         for file in files:
-            if file.endswith(".sln") and (exclude and exclude not in file):
+            if file.endswith(".sln") and (exclude == None or exclude not in file):
                 solution_paths.append(os.path.join(root, file))
 
     return solution_paths
@@ -268,16 +268,23 @@ def format_indent(i, line):
     solution_paths = parse_dotnet_system(root_path, "<ProjectReference")
 
     solution_paths = get_solution_paths("C:/Users/rolandgerm/projects/BuR")
-'''
 
-base_dir = "C:/Users/rolandgerm/source/Workspaces/ASW/AutomationStudio/Trunk/"
+    base_dir = "C:/Users/rolandgerm/source/Workspaces/ASW/AutomationStudio/Trunk/"
 solution_paths = get_solution_paths(base_dir + "Subsystems")
 solution_paths += get_solution_paths(base_dir, False)
 
 solution_paths = get_solution_paths(base_dir + "Subsystems", True, "Interfaces.sln")
 solution_paths =  [base_dir + "Subsystems/Interfaces.sln"]
 workspace = parse_dotnet_system(solution_paths, "<Reference")
+'''
+
+base_dir = "C:/Users/rolandgerm/source/AutomationStudio/"
+solution_paths = get_solution_paths("C:/Users/rolandgerm/projects/icagile-prg-archive/icagile-prg-admiral-2022/SupermarketReceipt-Refactoring-Kata/csharp")
+solution_paths = get_solution_paths("C:/Users/rolandgerm/projects/admiral/asw.betting.svc.engine")
+workspace = parse_dotnet_system(solution_paths, "<ProjectReference")
+
+solution_paths =  [base_dir + "Subsystems/Interfaces.sln"]
+solution_paths = get_solution_paths(base_dir + "Subsystems", True)
+workspace = parse_dotnet_system(solution_paths, "<Reference")
 
 write_dsl(workspace)
-
-#print(workspace.dumps(indent=3))
