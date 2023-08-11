@@ -1,7 +1,7 @@
 from structurizr import Workspace
 from structurizr.model import Location, SoftwareSystem
 
-from coupling import number_of_usages, number_of_users
+from c4_coupling import number_of_usages, number_of_users
 
 
 def test_no_uses():
