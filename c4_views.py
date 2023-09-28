@@ -1,3 +1,7 @@
+
+from structurizr import Workspace
+from structurizr.model import Container, Location, Component
+
 def write_dsl(workspace: Workspace):
     # Write the corresponding DSL code to the output file
     with open("./structurizr.dsl", "w") as f:
